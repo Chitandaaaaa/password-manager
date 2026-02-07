@@ -56,7 +56,8 @@
     "build": "tsc && vite build && electron-builder",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "reset": "node scripts/reset-database.js"
   },
   "dependencies": {
     "clsx": "^2.1.0",
