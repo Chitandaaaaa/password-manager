@@ -219,21 +219,21 @@ export default function MainPage() {
   return (
     <div className="h-full flex">
       {/* 侧边栏 */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <aside className="w-72 sidebar flex flex-col">
         {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-slate-200 bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary-600 rounded-xl shadow-lg shadow-primary-500/20 flex items-center justify-center">
               <Lock className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">密码管家</span>
+            <span className="text-xl font-bold text-slate-900 tracking-tight">密码管家</span>
           </div>
         </div>
 
         {/* 分类列表 */}
         <nav className="flex-1 overflow-y-auto p-4">
           <div className="space-y-1">
-            <p className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <p className="px-4 py-2 text-xs font-medium text-slate-400 uppercase font-semibold tracking-wider">
               分类
             </p>
             {categories.map((category) => (
@@ -256,35 +256,35 @@ export default function MainPage() {
         <div className="p-4 border-t border-gray-200 space-y-2">
           <button
             onClick={() => setIsSmartImportModalOpen(true)}
-            className="sidebar-item w-full text-gray-600"
+            className="sidebar-item w-full"
           >
             <Sparkles className="w-5 h-5" />
             <span>AI智能导入</span>
           </button>
           <button
             onClick={() => setIsCategoryModalOpen(true)}
-            className="sidebar-item w-full text-gray-600"
+            className="sidebar-item w-full"
           >
             <Tags className="w-5 h-5" />
             <span>管理分类</span>
           </button>
           <button
             onClick={() => setIsCategoryDisplayModalOpen(true)}
-            className="sidebar-item w-full text-gray-600"
+            className="sidebar-item w-full"
           >
             <Eye className="w-5 h-5" />
             <span>显示设置</span>
           </button>
           <button
             onClick={() => setIsExportModalOpen(true)}
-            className="sidebar-item w-full text-gray-600"
+            className="sidebar-item w-full"
           >
             <Download className="w-5 h-5" />
             <span>导出备份</span>
           </button>
           <button
             onClick={() => setIsSettingsModalOpen(true)}
-            className="sidebar-item w-full text-gray-600"
+            className="sidebar-item w-full"
           >
             <Settings className="w-5 h-5" />
             <span>设置</span>
@@ -292,7 +292,7 @@ export default function MainPage() {
           {enableClearAll && (
             <button
               onClick={handleClearAllClick}
-              className="sidebar-item w-full text-red-600 hover:bg-red-50"
+              className="sidebar-item w-full text-red-500 hover:bg-red-50 hover:text-red-700"
             >
               <Trash2 className="w-5 h-5" />
               <span>全部清除</span>
@@ -300,7 +300,7 @@ export default function MainPage() {
           )}
           <button
             onClick={handleLogout}
-            className="sidebar-item w-full text-red-600 hover:bg-red-50"
+            className="sidebar-item w-full text-red-500 hover:bg-red-50 hover:text-red-700"
           >
             <LogOut className="w-5 h-5" />
             <span>退出登录</span>
@@ -309,9 +309,9 @@ export default function MainPage() {
       </aside>
 
       {/* 主内容区 */}
-      <main className="flex-1 flex flex-col bg-gray-50">
+      <main className="flex-1 flex flex-col bg-slate-50/50">
         {/* 顶部栏 */}
-        <header className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between">
+        <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-10 px-6 flex items-center justify-between">
           {/* 搜索框 */}
           <div className="flex-1 max-w-xl">
             <div className="relative">
@@ -321,7 +321,7 @@ export default function MainPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="搜索密码..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-100 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="input-field pl-10 bg-slate-100 border-transparent focus:bg-white w-full"
               />
             </div>
           </div>
@@ -340,20 +340,20 @@ export default function MainPage() {
         <div className="flex-1 overflow-y-auto p-6">
           {passwords.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <Key className="w-12 h-12 text-gray-400" />
+              <div className="w-24 h-24 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+                <Key className="w-12 h-12 text-slate-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">
                 {searchQuery ? '没有找到匹配的密码' : '还没有保存任何密码'}
               </h3>
-              <p className="text-gray-500 max-w-sm">
+              <p className="text-slate-500 max-w-sm">
                 {searchQuery 
                   ? '尝试使用其他关键词搜索' 
                   : '点击右上角的"添加密码"按钮开始记录您的第一个密码'}
               </p>
             </div>
           ) : (
-            <div className="grid gap-4 max-w-4xl">
+            <div className="grid gap-3 max-w-5xl">
               {passwords.map((password) => (
                 <PasswordCard 
                   key={password.id} 
@@ -433,27 +433,27 @@ export default function MainPage() {
 
       {/* 全部清除确认弹窗 */}
       {isClearAllModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="card-elevated w-full max-w-md">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">危险操作</h3>
-                  <p className="text-sm text-gray-500">此操作将永久删除所有密码</p>
+                  <h3 className="text-lg font-semibold text-slate-900">危险操作</h3>
+                  <p className="text-sm text-slate-500">此操作将永久删除所有密码</p>
                 </div>
               </div>
 
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <p className="text-sm text-red-800">
+              <div className="bg-red-50 border border-red-100 rounded-xl rounded-lg p-4 mb-4">
+                <p className="text-sm text-red-700">
                   <strong>警告：</strong> 您即将删除所有密码记录。此操作不可撤销，所有数据将永久丢失！
                 </p>
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   请输入主密码确认
                 </label>
                 <input
@@ -467,7 +467,7 @@ export default function MainPage() {
               </div>
 
               {clearAllError && (
-                <div className="mb-4 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                <div className="mb-4 text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">
                   {clearAllError}
                 </div>
               )}

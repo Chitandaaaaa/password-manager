@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Eye, EyeOff, ExternalLink, Trash2, Edit2 } from 'lucide-react';
+import { Copy, Eye, EyeOff, ExternalLink, Trash2, Edit2, Check } from 'lucide-react';
 import { Password } from '../types';
 import { formatDate, cn } from '../lib/utils';
 
@@ -40,7 +40,6 @@ export default function PasswordCard({ password, onDelete, onEdit }: PasswordCar
     let passwordToCopy = decryptedPassword;
     
     if (!passwordToCopy && !showPassword) {
-      // 先解密再复制
       setIsLoading(true);
       try {
         const result = await window.electronAPI.decryptPassword(password.id);
@@ -59,7 +58,6 @@ export default function PasswordCard({ password, onDelete, onEdit }: PasswordCar
     
     if (passwordToCopy) {
       try {
-        // 使用 IPC 复制，支持自动清除
         const result = await window.electronAPI.copyPassword(passwordToCopy);
         if (result.success) {
           setCopied(true);
@@ -87,7 +85,6 @@ export default function PasswordCard({ password, onDelete, onEdit }: PasswordCar
   };
 
   const handleEdit = async () => {
-    // 如果密码还没解密，先解密
     if (!showPassword || !decryptedPassword) {
       setIsLoading(true);
       try {
@@ -105,54 +102,53 @@ export default function PasswordCard({ password, onDelete, onEdit }: PasswordCar
     }
   };
 
-  const getCategoryColor = (category?: string) => {
-    const colors: Record<string, string> = {
-      '社交': 'bg-blue-100 text-blue-700',
-      '工作': 'bg-purple-100 text-purple-700',
-      '银行': 'bg-green-100 text-green-700',
-      '邮箱': 'bg-yellow-100 text-yellow-700',
-      '购物': 'bg-pink-100 text-pink-700',
-      '其他': 'bg-gray-100 text-gray-700',
-      '未分类': 'bg-gray-100 text-gray-600',
+  const getCategoryBadge = (category?: string) => {
+    const styles: Record<string, string> = {
+      '社交': 'badge-blue',
+      '工作': 'badge-purple',
+      '银行': 'badge-green',
+      '邮箱': 'badge-yellow',
+      '购物': 'badge-red',
+      '其他': 'badge-gray',
+      '未分类': 'badge-gray',
     };
-    return colors[category || ''] || 'bg-gray-100 text-gray-600';
+    return styles[category || ''] || 'badge-gray';
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        {/* 左侧信息 */}
+    <div className="group card-flat p-5 hover-lift animate-fade-in">
+      <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900 truncate">
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-base font-semibold text-slate-900 truncate">
               {password.softwareName}
             </h3>
-            <span className={cn('px-2.5 py-0.5 rounded-full text-xs font-medium', getCategoryColor(password.category))}>
+            <span className={cn('badge', getCategoryBadge(password.category))}>
               {password.category || '未分类'}
             </span>
           </div>
           
           {password.username && (
-            <p className="text-gray-600 mb-1 flex items-center gap-2">
-              <span className="text-gray-400">账号:</span>
-              <span className="font-mono">{password.username}</span>
-            </p>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-medium text-slate-400 w-10">账号</span>
+              <span className="text-sm text-slate-700 font-mono">{password.username}</span>
+            </div>
           )}
           
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-gray-400">密码:</span>
+            <span className="text-xs font-medium text-slate-400 w-10">密码</span>
             <div className="flex items-center gap-2">
-              <span className="font-mono bg-gray-100 px-2 py-1 rounded text-sm">
+              <code className="px-2.5 py-1 bg-slate-100 rounded-md text-sm font-mono text-slate-700">
                 {showPassword ? decryptedPassword : '••••••••'}
-              </span>
+              </code>
               <button
                 onClick={handleDecrypt}
                 disabled={isLoading}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                className="btn-icon"
                 title={showPassword ? '隐藏密码' : '显示密码'}
               >
                 {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-slate-300 border-t-primary-500 rounded-full animate-spin" />
                 ) : showPassword ? (
                   <EyeOff className="w-4 h-4" />
                 ) : (
@@ -167,52 +163,49 @@ export default function PasswordCard({ password, onDelete, onEdit }: PasswordCar
               href={password.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-primary-600 hover:text-primary-700 flex items-center gap-1 mb-2"
+              className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 mb-2 group/link"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              {password.url}
+              <ExternalLink className="w-3.5 h-3.5 transition-transform group-hover/link:translate-x-0.5" />
+              <span className="truncate max-w-xs">{password.url}</span>
             </a>
           )}
 
           {password.notes && (
-            <p className="text-sm text-gray-500 mt-2 bg-gray-50 p-2 rounded">
+            <p className="text-sm text-slate-600 mt-2 bg-slate-50 p-3 rounded-lg border border-slate-100">
               {password.notes}
             </p>
           )}
 
-          <p className="text-xs text-gray-400 mt-3">
+          <p className="text-xs text-slate-400 mt-3">
             更新于 {formatDate(password.updatedAt)}
           </p>
         </div>
 
-        {/* 右侧操作 */}
-        <div className="flex items-center gap-1 ml-4">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleCopy}
             className={cn(
-              'p-2 rounded-lg transition-colors',
-              copied 
-                ? 'bg-green-100 text-green-700' 
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              'btn-icon',
+              copied && 'bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700'
             )}
-            title="复制密码"
+            title={copied ? '已复制' : '复制密码'}
           >
-            <Copy className="w-5 h-5" />
+            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </button>
           <button
             onClick={handleEdit}
             disabled={isLoading}
-            className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors disabled:opacity-50"
+            className="btn-icon hover:text-primary-600 hover:bg-primary-50"
             title="编辑"
           >
-            <Edit2 className="w-5 h-5" />
+            <Edit2 className="w-4 h-4" />
           </button>
           <button
             onClick={handleDelete}
-            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="btn-icon hover:text-red-600 hover:bg-red-50"
             title="删除"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
