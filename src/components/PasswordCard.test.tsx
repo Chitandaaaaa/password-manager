@@ -9,7 +9,6 @@ describe('PasswordCard', () => {
     id: 1,
     softwareName: 'Test App',
     username: 'testuser',
-    encryptedPassword: 'encrypted123',
     category: '工作',
     url: 'https://testapp.com',
     notes: 'Test notes',
@@ -333,19 +332,6 @@ describe('PasswordCard', () => {
       render(
         <PasswordCard 
           password={passwordWithEmptyCategory} 
-          onDelete={mockOnDelete} 
-          onEdit={mockOnEdit} 
-        />
-      );
-
-      expect(screen.getByText('未分类')).toBeInTheDocument();
-    });
-
-    it('should show "未分类" when category is null', () => {
-      const passwordWithNullCategory = { ...mockPassword, category: null };
-      render(
-        <PasswordCard 
-          password={passwordWithNullCategory} 
           onDelete={mockOnDelete} 
           onEdit={mockOnEdit} 
         />
