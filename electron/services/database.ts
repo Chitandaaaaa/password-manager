@@ -219,7 +219,7 @@ export class DatabaseService {
       encrypted_password: data.encryptedPassword,
       url: data.url,
       notes: data.notes,
-      category: data.category,
+      category: data.category || '未分类',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -289,7 +289,7 @@ export class DatabaseService {
     if (data.notes !== undefined) {
       passwords[index].notes = data.notes;
     }
-    if (data.category !== undefined) {
+    if (data.category !== undefined && data.category !== '') {
       passwords[index].category = data.category;
     }
     

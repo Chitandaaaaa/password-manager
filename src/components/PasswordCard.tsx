@@ -10,6 +10,15 @@ interface PasswordCardProps {
 }
 
 export default function PasswordCard({ password, onDelete, onEdit }: PasswordCardProps) {
+  // Debug: Log the received password data
+  console.log('PasswordCard received:', {
+    id: password.id,
+    softwareName: password.softwareName,
+    category: password.category,
+    categoryType: typeof password.category,
+    categoryLength: password.category?.length,
+  });
+
   const [showPassword, setShowPassword] = useState(false);
   const [decryptedPassword, setDecryptedPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -105,8 +114,16 @@ export default function PasswordCard({ password, onDelete, onEdit }: PasswordCar
   const KNOWN_CATEGORIES = ['社交', '工作', '银行', '邮箱', '购物', '其他', '未分类'];
   
   const getCategoryDisplayName = (category?: string): string => {
-    if (!category) return '未分类';
-    if (KNOWN_CATEGORIES.includes(category)) return category;
+    console.log('getCategoryDisplayName input:', category, 'type:', typeof category);
+    if (!category) {
+      console.log('  -> returning "未分类" (falsy value)');
+      return '未分类';
+    }
+    if (KNOWN_CATEGORIES.includes(category)) {
+      console.log('  -> returning known category:', category);
+      return category;
+    }
+    console.log('  -> returning "未分类" (unknown category)');
     return '未分类';
   };
   

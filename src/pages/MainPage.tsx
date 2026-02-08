@@ -97,6 +97,14 @@ export default function MainPage() {
       });
       
       if (result.success && result.passwords) {
+        // Debug: Log raw data from API
+        console.log('API returned passwords:', result.passwords.map((p: any) => ({
+          id: p.id,
+          name: p.software_name,
+          category: p.category,
+          categoryType: typeof p.category,
+        })));
+        
         const formattedPasswords: Password[] = result.passwords.map(p => ({
           id: p.id,
           softwareName: p.software_name,
@@ -107,6 +115,14 @@ export default function MainPage() {
           createdAt: p.created_at,
           updatedAt: p.updated_at,
         }));
+        
+        // Debug: Log formatted data
+        console.log('Formatted passwords:', formattedPasswords.map(p => ({
+          id: p.id,
+          name: p.softwareName,
+          category: p.category,
+        })));
+        
         setPasswords(formattedPasswords);
       } else {
         setError(result.error || '加载失败');

@@ -87,7 +87,7 @@ export class PasswordService {
       console.log('更新 notes:', data.notes);
       updateData.notes = data.notes;
     }
-    if (data.category !== undefined) {
+    if (data.category !== undefined && data.category !== '') {
       updateData.category = data.category;
     }
     
