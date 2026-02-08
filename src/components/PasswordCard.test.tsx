@@ -63,7 +63,7 @@ describe('PasswordCard', () => {
         />
       );
 
-      const link = screen.getByText('https://testapp.com');
+      const link = screen.getByRole('link');
       expect(link).toHaveAttribute('href', 'https://testapp.com');
       expect(link).toHaveAttribute('target', '_blank');
     });
@@ -301,17 +301,19 @@ describe('PasswordCard', () => {
       expect(badge).toHaveClass(expectedClass);
     });
 
-    it('should show "未分类" for unknown categories', () => {
-      const passwordWithUnknownCategory = { ...mockPassword, category: 'Unknown' };
+    it('should display custom categories directly', () => {
+      const passwordWithCustomCategory = { ...mockPassword, category: 'Unknown' };
       render(
         <PasswordCard 
-          password={passwordWithUnknownCategory} 
+          password={passwordWithCustomCategory} 
           onDelete={mockOnDelete} 
           onEdit={mockOnEdit} 
         />
       );
 
-      expect(screen.getByText('未分类')).toBeInTheDocument();
+      // 自定义分类应该直接显示，不被转换成"未分类"
+      expect(screen.getByText('Unknown')).toBeInTheDocument();
+      expect(screen.queryByText('未分类')).not.toBeInTheDocument();
     });
 
     it('should correctly display "社交" category in the list', () => {
@@ -332,6 +334,25 @@ describe('PasswordCard', () => {
       expect(screen.getByText('微信')).toBeInTheDocument();
       // 应该显示"社交"分类，而不是"未分类"
       expect(screen.getByText('社交')).toBeInTheDocument();
+      expect(screen.queryByText('未分类')).not.toBeInTheDocument();
+    });
+
+    it('should correctly display custom category like "test"', () => {
+      const customPassword = { 
+        ...mockPassword, 
+        softwareName: 'Test App',
+        category: 'test' 
+      };
+      render(
+        <PasswordCard 
+          password={customPassword} 
+          onDelete={mockOnDelete} 
+          onEdit={mockOnEdit} 
+        />
+      );
+
+      // 应该显示"test"自定义分类
+      expect(screen.getByText('test')).toBeInTheDocument();
       expect(screen.queryByText('未分类')).not.toBeInTheDocument();
     });
   });

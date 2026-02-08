@@ -111,20 +111,15 @@ export default function PasswordCard({ password, onDelete, onEdit }: PasswordCar
     }
   };
 
-  const KNOWN_CATEGORIES = ['社交', '工作', '银行', '邮箱', '购物', '其他', '未分类'];
-  
+  // 只检查 category 是否为空，不限制具体分类值
   const getCategoryDisplayName = (category?: string): string => {
     console.log('getCategoryDisplayName input:', category, 'type:', typeof category);
-    if (!category) {
-      console.log('  -> returning "未分类" (falsy value)');
+    if (!category || category === '') {
+      console.log('  -> returning "未分类" (empty value)');
       return '未分类';
     }
-    if (KNOWN_CATEGORIES.includes(category)) {
-      console.log('  -> returning known category:', category);
-      return category;
-    }
-    console.log('  -> returning "未分类" (unknown category)');
-    return '未分类';
+    console.log('  -> returning category:', category);
+    return category; // 直接返回原始值，支持自定义分类
   };
   
   const getCategoryBadge = (category?: string) => {
@@ -138,7 +133,8 @@ export default function PasswordCard({ password, onDelete, onEdit }: PasswordCar
       '其他': 'badge-gray',
       '未分类': 'badge-gray',
     };
-    return styles[displayName];
+    // 返回对应样式，如果没有则使用默认灰色样式（支持自定义分类）
+    return styles[displayName] || 'badge-gray';
   };
 
   return (
