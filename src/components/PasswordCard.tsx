@@ -102,7 +102,16 @@ export default function PasswordCard({ password, onDelete, onEdit }: PasswordCar
     }
   };
 
+  const KNOWN_CATEGORIES = ['社交', '工作', '银行', '邮箱', '购物', '其他', '未分类'];
+  
+  const getCategoryDisplayName = (category?: string): string => {
+    if (!category) return '未分类';
+    if (KNOWN_CATEGORIES.includes(category)) return category;
+    return '未分类';
+  };
+  
   const getCategoryBadge = (category?: string) => {
+    const displayName = getCategoryDisplayName(category);
     const styles: Record<string, string> = {
       '社交': 'badge-blue',
       '工作': 'badge-purple',
@@ -112,7 +121,7 @@ export default function PasswordCard({ password, onDelete, onEdit }: PasswordCar
       '其他': 'badge-gray',
       '未分类': 'badge-gray',
     };
-    return styles[category || ''] || 'badge-gray';
+    return styles[displayName];
   };
 
   return (
@@ -124,7 +133,7 @@ export default function PasswordCard({ password, onDelete, onEdit }: PasswordCar
               {password.softwareName}
             </h3>
             <span className={cn('badge', getCategoryBadge(password.category))}>
-              {password.category || '未分类'}
+              {getCategoryDisplayName(password.category)}
             </span>
           </div>
           

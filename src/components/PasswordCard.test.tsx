@@ -286,6 +286,7 @@ describe('PasswordCard', () => {
       ['邮箱', 'badge-yellow'],
       ['购物', 'badge-red'],
       ['其他', 'badge-gray'],
+      ['未分类', 'badge-gray'],
     ])('should render %s category with correct style', (category, expectedClass) => {
       const passwordWithCategory = { ...mockPassword, category };
       render(
@@ -298,6 +299,7 @@ describe('PasswordCard', () => {
 
       const badge = screen.getByText(category);
       expect(badge).toHaveClass('badge');
+      expect(badge).toHaveClass(expectedClass);
     });
 
     it('should show "未分类" for unknown categories', () => {
@@ -311,6 +313,66 @@ describe('PasswordCard', () => {
       );
 
       expect(screen.getByText('未分类')).toBeInTheDocument();
+    });
+
+    it('should show "未分类" when category is undefined', () => {
+      const passwordWithoutCategory = { ...mockPassword, category: undefined };
+      render(
+        <PasswordCard 
+          password={passwordWithoutCategory} 
+          onDelete={mockOnDelete} 
+          onEdit={mockOnEdit} 
+        />
+      );
+
+      expect(screen.getByText('未分类')).toBeInTheDocument();
+    });
+
+    it('should show "未分类" when category is empty string', () => {
+      const passwordWithEmptyCategory = { ...mockPassword, category: '' };
+      render(
+        <PasswordCard 
+          password={passwordWithEmptyCategory} 
+          onDelete={mockOnDelete} 
+          onEdit={mockOnEdit} 
+        />
+      );
+
+      expect(screen.getByText('未分类')).toBeInTheDocument();
+    });
+
+    it('should show "未分类" when category is null', () => {
+      const passwordWithNullCategory = { ...mockPassword, category: null };
+      render(
+        <PasswordCard 
+          password={passwordWithNullCategory} 
+          onDelete={mockOnDelete} 
+          onEdit={mockOnEdit} 
+        />
+      );
+
+      expect(screen.getByText('未分类')).toBeInTheDocument();
+    });
+
+    it('should correctly display "社交" category in the list', () => {
+      const socialPassword = { 
+        ...mockPassword, 
+        softwareName: '微信',
+        category: '社交' 
+      };
+      render(
+        <PasswordCard 
+          password={socialPassword} 
+          onDelete={mockOnDelete} 
+          onEdit={mockOnEdit} 
+        />
+      );
+
+      // 应该显示软件名称
+      expect(screen.getByText('微信')).toBeInTheDocument();
+      // 应该显示"社交"分类，而不是"未分类"
+      expect(screen.getByText('社交')).toBeInTheDocument();
+      expect(screen.queryByText('未分类')).not.toBeInTheDocument();
     });
   });
 });
