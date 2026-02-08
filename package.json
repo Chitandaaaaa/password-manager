@@ -11,7 +11,7 @@
     "productName": "密码管家",
     "copyright": "Copyright © 2024",
     "directories": {
-      "output": "release",
+      "output": "dist-release",
       "buildResources": "build"
     },
     "files": [

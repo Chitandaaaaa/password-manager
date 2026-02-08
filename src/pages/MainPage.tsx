@@ -105,16 +105,23 @@ export default function MainPage() {
           categoryType: typeof p.category,
         })));
         
-        const formattedPasswords: Password[] = result.passwords.map(p => ({
-          id: p.id,
-          softwareName: p.software_name,
-          username: p.username,
-          url: p.url,
-          notes: p.notes,
-          category: p.category,
-          createdAt: p.created_at,
-          updatedAt: p.updated_at,
-        }));
+        const formattedPasswords: Password[] = result.passwords.map(p => {
+          // 确保 category 有值，与数据库保持一致
+          const category = p.category || '未分类';
+          if (!p.category) {
+            console.warn(`Password ${p.id} (${p.software_name}) has no category, defaulting to '未分类'`);
+          }
+          return {
+            id: p.id,
+            softwareName: p.software_name,
+            username: p.username,
+            url: p.url,
+            notes: p.notes,
+            category: category, // 保证不为空
+            createdAt: p.created_at,
+            updatedAt: p.updated_at,
+          };
+        });
         
         // Debug: Log formatted data
         console.log('Formatted passwords:', formattedPasswords.map(p => ({

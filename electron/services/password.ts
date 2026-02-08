@@ -7,7 +7,7 @@ export interface PasswordData {
   password: string;
   url?: string;
   notes?: string;
-  category?: string;
+  category: string; // 必须与数据库一致，不为空
 }
 
 export interface PasswordRecord {
@@ -17,7 +17,7 @@ export interface PasswordRecord {
   encrypted_password: string;
   url?: string;
   notes?: string;
-  category?: string;
+  category: string; // 必须与数据库一致，不为空
   created_at: string;
   updated_at: string;
 }

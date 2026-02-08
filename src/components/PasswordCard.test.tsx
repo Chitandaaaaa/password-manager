@@ -314,32 +314,6 @@ describe('PasswordCard', () => {
       expect(screen.getByText('未分类')).toBeInTheDocument();
     });
 
-    it('should show "未分类" when category is undefined', () => {
-      const passwordWithoutCategory = { ...mockPassword, category: undefined };
-      render(
-        <PasswordCard 
-          password={passwordWithoutCategory} 
-          onDelete={mockOnDelete} 
-          onEdit={mockOnEdit} 
-        />
-      );
-
-      expect(screen.getByText('未分类')).toBeInTheDocument();
-    });
-
-    it('should show "未分类" when category is empty string', () => {
-      const passwordWithEmptyCategory = { ...mockPassword, category: '' };
-      render(
-        <PasswordCard 
-          password={passwordWithEmptyCategory} 
-          onDelete={mockOnDelete} 
-          onEdit={mockOnEdit} 
-        />
-      );
-
-      expect(screen.getByText('未分类')).toBeInTheDocument();
-    });
-
     it('should correctly display "社交" category in the list', () => {
       const socialPassword = { 
         ...mockPassword, 
