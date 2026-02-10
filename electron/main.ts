@@ -7,6 +7,7 @@ import { CryptoService } from './services/crypto';
 import { PasswordService } from './services/password';
 import { OllamaService } from './services/ollama';
 import { OllamaConfig } from './services/ollama';
+import { NotificationService } from './services/notification';
 
 // 保持对window对象的全局引用，防止JavaScript对象被垃圾回收
 let mainWindow: BrowserWindow | null = null;
@@ -15,6 +16,7 @@ let mainWindow: BrowserWindow | null = null;
 const dbService = new DatabaseService();
 const cryptoService = new CryptoService();
 const ollamaService = new OllamaService(dbService);
+const notificationService = new NotificationService(dbService);
 let passwordService: PasswordService | null = null;
 
 // 安全功能变量
@@ -42,8 +44,6 @@ function createWindow() {
   // 加载应用
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-    // 开发模式下如需调试可取消下面这行的注释
-    // mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
@@ -51,6 +51,10 @@ function createWindow() {
   // 窗口准备好后显示
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
+    // 开发模式下打开开发者工具
+    if (process.env.VITE_DEV_SERVER_URL) {
+      mainWindow?.webContents.openDevTools();
+    }
   });
 
   // 窗口关闭时触发
@@ -98,7 +102,10 @@ function createWindow() {
 app.whenReady().then(async () => {
   // 初始化数据库
   await dbService.init();
-  
+
+  // 启动通知服务
+  notificationService.start(60); // 每小时检查一次
+
   createWindow();
 
   app.on('activate', () => {
@@ -110,6 +117,9 @@ app.whenReady().then(async () => {
 
 // 所有窗口关闭时退出应用
 app.on('window-all-closed', () => {
+  // 停止通知服务
+  notificationService.stop();
+
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -332,13 +342,15 @@ ipcMain.handle('password:update', async (event, id: number, data: any) => {
   if (!passwordService) {
     return { success: false, error: '未登录' };
   }
-  
+
   try {
     console.log('notes 字段:', data.notes, typeof data.notes);
     await passwordService.updatePassword(id, {
       softwareName: data.softwareName,
       username: data.username,
+      loginType: data.loginType,
       password: data.password,
+      phoneNumber: data.phoneNumber,
       url: data.url,
       notes: data.notes,
       category: data.category,
@@ -644,6 +656,86 @@ ipcMain.handle('category:getDisplay', async () => {
 ipcMain.handle('category:updateDisplay', (event, categories: string[]) => {
   try {
     dbService.updateDisplayCategories(categories);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+// ===== 会员订阅管理 =====
+
+// 添加订阅
+ipcMain.handle('subscription:add', async (event, passwordId: number, data) => {
+  if (!passwordService) {
+    return { success: false, error: '未登录' };
+  }
+
+  try {
+    const subscription = await dbService.addSubscription(passwordId, data);
+    return { success: true, subscription };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+// 更新订阅
+ipcMain.handle('subscription:update', async (event, passwordId: number, subscriptionId: string, data) => {
+  if (!passwordService) {
+    return { success: false, error: '未登录' };
+  }
+
+  try {
+    await dbService.updateSubscription(passwordId, subscriptionId, data);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+// 删除订阅
+ipcMain.handle('subscription:delete', async (event, passwordId: number, subscriptionId: string) => {
+  if (!passwordService) {
+    return { success: false, error: '未登录' };
+  }
+
+  try {
+    await dbService.deleteSubscription(passwordId, subscriptionId);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+// 获取即将到期的订阅
+ipcMain.handle('subscription:getExpiring', async (event, days: number) => {
+  if (!passwordService) {
+    return { success: false, error: '未登录' };
+  }
+
+  try {
+    const subscriptions = await dbService.getExpiringSubscriptions(days);
+    return { success: true, subscriptions };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+// ===== 通知配置 =====
+
+// 获取通知配置
+ipcMain.handle('notification:getConfig', () => {
+  try {
+    const config = dbService.getNotificationConfig();
+    return { success: true, config };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
+
+// 更新通知配置
+ipcMain.handle('notification:updateConfig', (event, config) => {
+  try {
+    dbService.updateNotificationConfig(config);
     return { success: true };
   } catch (error) {
     return { success: false, error: (error as Error).message };

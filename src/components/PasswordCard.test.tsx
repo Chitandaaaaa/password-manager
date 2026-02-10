@@ -9,9 +9,11 @@ describe('PasswordCard', () => {
     id: 1,
     softwareName: 'Test App',
     username: 'testuser',
+    loginType: 'password',
     category: '工作',
     url: 'https://testapp.com',
     notes: 'Test notes',
+    subscriptions: [],
     createdAt: '2024-01-15T10:00:00',
     updatedAt: '2024-01-15T10:00:00',
   };

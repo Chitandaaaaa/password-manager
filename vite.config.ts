@@ -7,20 +7,9 @@ import renderer from 'vite-plugin-electron-renderer';
 export default defineConfig({
   plugins: [
     react(),
-    electron([
-      {
-        entry: 'electron/main.ts',
-        onstart(options) {
-          options.startup();
-        },
-      },
-      {
-        entry: 'electron/preload.ts',
-        onstart(options) {
-          options.reload();
-        },
-      },
-    ]),
+    electron({
+      entry: 'electron/main.ts',
+    }),
     renderer(),
   ],
   resolve: {

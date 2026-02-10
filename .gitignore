@@ -36,3 +36,48 @@ dist-electron
 
 # Build output
 release
+release-builds
+out
+
+# Electron Builder
+app/dist
+app/node_modules
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+
+# Testing
+coverage
+.nyc_output
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# Windows installer artifacts
+*.msi
+*.exe.blockmap
+
+# macOS
+*.dmg
+*.dmg.blockmap
+
+# Linux
+*.AppImage
+*.snap
+*.deb
+*.rpm
+*.tar.gz
+
+# Auto-generated files
+version-info.json
+electron-builder-effective-config.yaml

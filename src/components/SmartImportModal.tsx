@@ -203,6 +203,7 @@ export default function SmartImportModal({ isOpen, onClose, onSuccess }: SmartIm
         const result = await window.electronAPI.addPassword({
           softwareName: entry.softwareName,
           username: entry.username,
+          loginType: 'password',
           password: entry.password,
           url: entry.url,
           category: entry.category || '未分类',

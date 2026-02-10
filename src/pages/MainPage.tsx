@@ -115,9 +115,11 @@ export default function MainPage() {
             id: p.id,
             softwareName: p.software_name,
             username: p.username,
+            loginType: p.login_type || 'password', // 默认为密码登录
             url: p.url,
             notes: p.notes,
             category: category, // 保证不为空
+            subscriptions: p.subscriptions || [],
             createdAt: p.created_at,
             updatedAt: p.updated_at,
           };
@@ -378,11 +380,12 @@ export default function MainPage() {
           ) : (
             <div className="grid gap-3 max-w-5xl">
               {passwords.map((password) => (
-                <PasswordCard 
-                  key={password.id} 
+                <PasswordCard
+                  key={password.id}
                   password={password}
                   onDelete={loadPasswords}
                   onEdit={handleEditPassword}
+                  onRefresh={loadPasswords}
                 />
               ))}
             </div>

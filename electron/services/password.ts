@@ -1,10 +1,14 @@
 import { DatabaseService } from './database';
 import { CryptoService, EncryptedData } from './crypto';
 
+export type LoginType = 'password' | 'sms_code';
+
 export interface PasswordData {
   softwareName: string;
   username?: string;
-  password: string;
+  loginType: LoginType;
+  password?: string;
+  phoneNumber?: string;
   url?: string;
   notes?: string;
   category: string; // 必须与数据库一致，不为空
@@ -14,7 +18,9 @@ export interface PasswordRecord {
   id: number;
   software_name: string;
   username?: string;
-  encrypted_password: string;
+  login_type: LoginType;
+  encrypted_password?: string;
+  phone_number?: string;
   url?: string;
   notes?: string;
   category: string; // 必须与数据库一致，不为空
@@ -35,13 +41,20 @@ export class PasswordService {
 
   // 添加密码
   async addPassword(data: PasswordData): Promise<number> {
-    // 加密密码
-    const encrypted = this.cryptoService.encryptPassword(data.password, this.key);
+    let encryptedPassword: string | undefined;
+    
+    // 仅在密码登录类型时加密密码
+    if (data.loginType === 'password' && data.password) {
+      const encrypted = this.cryptoService.encryptPassword(data.password, this.key);
+      encryptedPassword = JSON.stringify(encrypted);
+    }
     
     return await this.db.addPassword({
       softwareName: data.softwareName,
       username: data.username,
-      encryptedPassword: JSON.stringify(encrypted),
+      loginType: data.loginType,
+      encryptedPassword,
+      phoneNumber: data.phoneNumber,
       url: data.url,
       notes: data.notes,
       category: data.category || '未分类',
@@ -55,12 +68,17 @@ export class PasswordService {
 
   // 解密密码
   async decryptPassword(id: number): Promise<string> {
-    const record = await this.db.getPasswordById(id);
-    
+    // 直接从数据库获取完整记录（包含 encrypted_password）
+    const record = await this.db.getAllPasswords().then(passwords => passwords.find(p => p.id === id));
+
     if (!record) {
       throw new Error('密码记录不存在');
     }
-    
+
+    if (!record.encrypted_password) {
+      throw new Error('该账号未设置密码');
+    }
+
     const encryptedData: EncryptedData = JSON.parse(record.encrypted_password);
     return this.cryptoService.decryptPassword(encryptedData, this.key);
   }
@@ -76,9 +94,15 @@ export class PasswordService {
     if (data.username !== undefined) {
       updateData.username = data.username;
     }
+    if (data.loginType !== undefined) {
+      updateData.loginType = data.loginType;
+    }
     if (data.password !== undefined) {
       const encrypted = this.cryptoService.encryptPassword(data.password, this.key);
       updateData.encryptedPassword = JSON.stringify(encrypted);
+    }
+    if (data.phoneNumber !== undefined) {
+      updateData.phoneNumber = data.phoneNumber;
     }
     if (data.url !== undefined) {
       updateData.url = data.url;
@@ -110,7 +134,9 @@ export class PasswordService {
     id: number;
     softwareName: string;
     username?: string;
-    password: string;
+    loginType: LoginType;
+    password?: string;
+    phoneNumber?: string;
     url?: string;
     notes?: string;
     category: string;
@@ -122,14 +148,21 @@ export class PasswordService {
 
     for (const record of passwords) {
       try {
-        const encryptedData: EncryptedData = JSON.parse(record.encrypted_password);
-        const decryptedPassword = this.cryptoService.decryptPassword(encryptedData, this.key);
+        let decryptedPassword: string | undefined;
+        
+        // 仅在密码登录类型时解密密码
+        if (record.login_type === 'password' && record.encrypted_password) {
+          const encryptedData: EncryptedData = JSON.parse(record.encrypted_password);
+          decryptedPassword = this.cryptoService.decryptPassword(encryptedData, this.key);
+        }
         
         decryptedPasswords.push({
           id: record.id,
           softwareName: record.software_name,
           username: record.username,
+          loginType: record.login_type,
           password: decryptedPassword,
+          phoneNumber: record.phone_number,
           url: record.url,
           notes: record.notes,
           category: record.category,
@@ -137,7 +170,7 @@ export class PasswordService {
           updatedAt: record.updated_at,
         });
       } catch (error) {
-        console.error(`解密密码 ID ${record.id} 失败:`, error);
+        console.error(`处理密码记录 ID ${record.id} 失败:`, error);
       }
     }
 

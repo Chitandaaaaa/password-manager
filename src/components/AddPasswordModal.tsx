@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, Lock, Globe, FileText, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { X, Lock, Globe, FileText, RefreshCw, Eye, EyeOff, Smartphone } from 'lucide-react';
 import { cn, getPasswordStrengthColor, getPasswordStrengthText } from '../lib/utils';
+import { LoginType, LOGIN_TYPE_LABELS } from '../types';
 
 interface AddPasswordModalProps {
   isOpen: boolean;
@@ -12,7 +13,9 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
   const [formData, setFormData] = useState({
     softwareName: '',
     username: '',
+    loginType: 'password' as LoginType,
     password: '',
+    phoneNumber: '',
     url: '',
     notes: '',
     category: '未分类',
@@ -66,17 +69,38 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
     setFormData({ ...formData, password: newPassword });
   };
 
+  const validateForm = (): boolean => {
+    if (!formData.softwareName.trim()) {
+      setError('请输入软件名称');
+      return false;
+    }
+
+    if (formData.loginType === 'password' && !formData.password) {
+      setError('请输入密码');
+      return false;
+    }
+
+    if (formData.loginType === 'sms_code') {
+      if (!formData.phoneNumber.trim()) {
+        setError('请输入手机号');
+        return false;
+      }
+      // 中国大陆手机号格式验证
+      const phoneRegex = /^1[3-9]\d{9}$/;
+      if (!phoneRegex.test(formData.phoneNumber.trim())) {
+        setError('请输入正确的手机号格式');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!formData.softwareName.trim()) {
-      setError('请输入软件名称');
-      return;
-    }
-
-    if (!formData.password) {
-      setError('请输入密码');
+    if (!validateForm()) {
       return;
     }
 
@@ -86,7 +110,9 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
       const result = await window.electronAPI.addPassword({
         softwareName: formData.softwareName.trim(),
         username: formData.username.trim(),
-        password: formData.password,
+        loginType: formData.loginType,
+        password: formData.loginType === 'password' ? formData.password : undefined,
+        phoneNumber: formData.loginType === 'sms_code' ? formData.phoneNumber.trim() : undefined,
         url: formData.url.trim(),
         notes: formData.notes.trim(),
         category: formData.category,
@@ -99,7 +125,9 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
         setFormData({
           softwareName: '',
           username: '',
+          loginType: 'password',
           password: '',
+          phoneNumber: '',
           url: '',
           notes: '',
           category: '未分类',
@@ -154,6 +182,41 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
             </div>
           </div>
 
+          {/* 登录方式选择 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              登录方式
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, loginType: 'password' })}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-all',
+                  formData.loginType === 'password'
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                )}
+              >
+                <Lock className="w-4 h-4" />
+                <span className="text-sm font-medium">{LOGIN_TYPE_LABELS.password}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, loginType: 'sms_code' })}
+                className={cn(
+                  'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-all',
+                  formData.loginType === 'sms_code'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                )}
+              >
+                <Smartphone className="w-4 h-4" />
+                <span className="text-sm font-medium">{LOGIN_TYPE_LABELS.sms_code}</span>
+              </button>
+            </div>
+          </div>
+
           {/* 用户名 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -168,63 +231,86 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
             />
           </div>
 
-          {/* 密码 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              密码 <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="input-field pr-20"
-                placeholder="输入或生成密码"
-                required
-              />
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="p-1.5 text-gray-400 hover:text-gray-600 rounded"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-                <button
-                  type="button"
-                  onClick={generatePassword}
-                  className="p-1.5 text-primary-600 hover:bg-primary-50 rounded"
-                  title="生成随机密码"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
+          {/* 密码字段 - 仅在密码登录时显示 */}
+          {formData.loginType === 'password' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                密码 <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="input-field pr-20"
+                  placeholder="输入或生成密码"
+                  required
+                />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="p-1.5 text-gray-400 hover:text-gray-600 rounded"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={generatePassword}
+                    className="p-1.5 text-primary-600 hover:bg-primary-50 rounded"
+                    title="生成随机密码"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+              
+              {/* 密码强度 */}
+              {formData.password && (
+                <div className="mt-2">
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-gray-600">密码强度</span>
+                    <span className={cn(
+                      'font-medium',
+                      strength < 30 ? 'text-red-600' :
+                      strength < 50 ? 'text-orange-600' :
+                      strength < 70 ? 'text-yellow-600' :
+                      strength < 90 ? 'text-blue-600' : 'text-green-600'
+                    )}>
+                      {getPasswordStrengthText(strength)}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={cn('h-full transition-all duration-300', getPasswordStrengthColor(strength))}
+                      style={{ width: `${strength}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-            
-            {/* 密码强度 */}
-            {formData.password && (
-              <div className="mt-2">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-gray-600">密码强度</span>
-                  <span className={cn(
-                    'font-medium',
-                    strength < 30 ? 'text-red-600' :
-                    strength < 50 ? 'text-orange-600' :
-                    strength < 70 ? 'text-yellow-600' :
-                    strength < 90 ? 'text-blue-600' : 'text-green-600'
-                  )}>
-                    {getPasswordStrengthText(strength)}
-                  </span>
-                </div>
-                <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className={cn('h-full transition-all duration-300', getPasswordStrengthColor(strength))}
-                    style={{ width: `${strength}%` }}
-                  />
-                </div>
+          )}
+
+          {/* 手机号字段 - 仅在短信验证码登录时显示 */}
+          {formData.loginType === 'sms_code' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                手机号 <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="tel"
+                  value={formData.phoneNumber}
+                  onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                  className="input-field pl-10"
+                  placeholder="13800138000"
+                  maxLength={11}
+                />
               </div>
-            )}
-          </div>
+              <p className="text-xs text-gray-500 mt-1">用于接收短信验证码登录</p>
+            </div>
+          )}
 
           {/* 网址 */}
           <div>

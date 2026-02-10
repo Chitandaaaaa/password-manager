@@ -136,6 +136,31 @@ export default function ComponentName({ prop1, prop2 }: Props) {
 3. Check no `console.log` left in production code (except debug logs)
 4. Use `git add -A` then `git commit -m "type: description"`
 
+### After Code Modifications
+
+**MANDATORY Verification Workflow:**
+
+After completing any code change, ALWAYS verify by running:
+
+```bash
+# 1. Type check (must pass)
+npm run typecheck
+
+# 2. Build the project (must succeed)
+npm run build
+
+# 3. Start dev server and verify manually
+npm run dev
+```
+
+**Rationale:**
+- Type checking catches type mismatches early
+- Building ensures all code compiles correctly
+- Manual verification catches UI/UX issues (like flickering, layout problems)
+- Prevents shipping broken code
+
+**This is NOT optional - always verify before marking a task complete.**
+
 ## Common Issues
 
 - **File locking on Windows**: Use `dist-release` as output dir temporarily if `release` is locked

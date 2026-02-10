@@ -2,6 +2,28 @@ import Store from 'electron-store';
 import { app } from 'electron';
 import path from 'path';
 
+// 订阅类型（数据库存储使用 camelCase）
+type BillingMode = 'time' | 'traffic';
+type UnitType = 'GB' | 'MB' | '次' | 'Token';
+
+interface Subscription {
+  id: string;
+  serviceName: string;
+  category: 'video' | 'music' | 'game' | 'software' | 'cloud' | 'shopping' | 'other';
+  level: 'basic' | 'premium' | 'ultimate';
+  billingMode: BillingMode;       // 计费模式
+  startDate?: string;             // 时间制：开始日期
+  endDate?: string;               // 时间制：结束日期
+  totalAmount?: number;           // 流量制：总量
+  usedAmount?: number;            // 流量制：已用量
+  unit?: UnitType;                // 流量制：单位
+  cost?: number;
+  autoRenew: boolean;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface User {
   id: number;
   master_password_hash: string;
@@ -10,14 +32,19 @@ interface User {
   updated_at: string;
 }
 
+type LoginType = 'password' | 'sms_code';
+
 interface PasswordRecord {
   id: number;
   software_name: string;
   username?: string;
-  encrypted_password: string;
+  login_type: LoginType;
+  encrypted_password?: string;
+  phone_number?: string;
   url?: string;
   notes?: string;
   category: string;
+  subscriptions: Subscription[];
   created_at: string;
   updated_at: string;
 }
@@ -44,6 +71,23 @@ interface AppConfig {
   };
   dangerousOperations: {
     enableClearAll: boolean; // 是否启用全部清除按钮
+  };
+  notificationConfig: {
+    systemNotification: {
+      enabled: boolean;
+      remindDays: number;
+    };
+    emailNotification: {
+      enabled: boolean;
+      smtpHost: string;
+      smtpPort: number;
+      fromEmail: string;
+      authCode: string;
+      toEmail: string;
+      remindDays: number;
+      remindTime: string;
+    };
+    lastCheckTime?: string;
   };
 }
 
@@ -90,6 +134,22 @@ export class DatabaseService {
           dangerousOperations: {
             enableClearAll: false, // 默认不启用全部清除，需要在设置中手动开启
           },
+          notificationConfig: {
+            systemNotification: {
+              enabled: true,
+              remindDays: 7,
+            },
+            emailNotification: {
+              enabled: false,
+              smtpHost: '',
+              smtpPort: 587,
+              fromEmail: '',
+              authCode: '',
+              toEmail: '',
+              remindDays: 7,
+              remindTime: '09:00',
+            },
+          },
         },
       },
     });
@@ -106,6 +166,34 @@ export class DatabaseService {
   }
 
   async init() {
+    // 迁移历史数据：为所有密码记录添加 login_type 字段
+    const passwords = this.store.get('passwords');
+    let passwordsNeedUpdate = false;
+    
+    for (const password of passwords) {
+      if (!password.login_type) {
+        password.login_type = 'password';
+        passwordsNeedUpdate = true;
+        console.log(`为密码记录 ${password.id} (${password.software_name}) 添加默认 login_type: password`);
+      }
+      
+      // 迁移订阅数据：为所有订阅添加 billingMode 字段
+      if (password.subscriptions && password.subscriptions.length > 0) {
+        for (const subscription of password.subscriptions) {
+          if (!subscription.billingMode) {
+            subscription.billingMode = 'time';
+            passwordsNeedUpdate = true;
+            console.log(`为订阅 ${subscription.id} 添加默认 billingMode: time`);
+          }
+        }
+      }
+    }
+    
+    if (passwordsNeedUpdate) {
+      this.store.set('passwords', passwords);
+      console.log('历史数据迁移完成：已添加 login_type 和 billingMode 字段');
+    }
+    
     // 检查并迁移配置
     const config = this.store.get('config');
     let needsUpdate = false;
@@ -159,6 +247,28 @@ export class DatabaseService {
       console.log('初始化 dangerousOperations 配置');
     }
     
+    // 如果缺少 notificationConfig 配置，添加默认值
+    if (!config.notificationConfig) {
+      config.notificationConfig = {
+        systemNotification: {
+          enabled: true,
+          remindDays: 7,
+        },
+        emailNotification: {
+          enabled: false,
+          smtpHost: '',
+          smtpPort: 587,
+          fromEmail: '',
+          authCode: '',
+          toEmail: '',
+          remindDays: 7,
+          remindTime: '09:00',
+        },
+      };
+      needsUpdate = true;
+      console.log('初始化 notificationConfig 配置');
+    }
+    
     // 保存更新后的配置
     if (needsUpdate) {
       this.store.set('config', config);
@@ -180,11 +290,11 @@ export class DatabaseService {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    
+
     const users = this.store.get('users');
     users.push(user);
     this.store.set('users', users);
-    
+
     return user.id;
   }
 
@@ -207,81 +317,106 @@ export class DatabaseService {
   async addPassword(data: {
     softwareName: string;
     username?: string;
-    encryptedPassword: string;
+    loginType: LoginType;
+    encryptedPassword?: string;
+    phoneNumber?: string;
     url?: string;
     notes?: string;
     category: string;
+    subscriptions?: Subscription[];
   }): Promise<number> {
     const password: PasswordRecord = {
       id: this.passwordId++,
       software_name: data.softwareName,
       username: data.username,
+      login_type: data.loginType,
       encrypted_password: data.encryptedPassword,
+      phone_number: data.phoneNumber,
       url: data.url,
       notes: data.notes,
       category: data.category || '未分类',
+      subscriptions: data.subscriptions || [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    
+
     const passwords = this.store.get('passwords');
     passwords.push(password);
     this.store.set('passwords', passwords);
-    
+
     return password.id;
   }
 
   async getPasswords(filters?: { search?: string; category?: string }): Promise<Omit<PasswordRecord, 'encrypted_password'>[]> {
     let passwords = this.store.get('passwords');
-    
+
     if (filters?.search) {
       const searchLower = filters.search.toLowerCase();
-      passwords = passwords.filter(p => 
+      passwords = passwords.filter(p =>
         p.software_name.toLowerCase().includes(searchLower) ||
         (p.username && p.username.toLowerCase().includes(searchLower)) ||
         (p.url && p.url.toLowerCase().includes(searchLower))
       );
     }
-    
+
     if (filters?.category && filters.category !== '全部') {
       passwords = passwords.filter(p => p.category === filters.category);
     }
-    
+
     // 按更新时间倒序
     passwords.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-    
-    // 移除加密密码字段
-    return passwords.map(({ encrypted_password, ...rest }) => rest);
+
+    // 移除加密密码字段，subscriptions 已经是 camelCase
+    return passwords.map(({ encrypted_password, subscriptions, ...rest }) => ({
+      ...rest,
+      subscriptions: subscriptions || [],
+    }));
   }
 
-  async getPasswordById(id: number): Promise<PasswordRecord | null> {
+  async getPasswordById(id: number): Promise<Omit<PasswordRecord, 'encrypted_password'> | null> {
     const passwords = this.store.get('passwords');
-    return passwords.find(p => p.id === id) || null;
+    const password = passwords.find(p => p.id === id);
+    if (!password) return null;
+
+    const { encrypted_password, subscriptions, ...rest } = password;
+    return {
+      ...rest,
+      subscriptions: subscriptions || [],
+    };
   }
 
   async updatePassword(id: number, data: Partial<{
     softwareName: string;
     username: string;
+    loginType: LoginType;
     encryptedPassword: string;
+    phoneNumber: string;
     url: string;
     notes: string;
     category: string;
+    subscriptions: Subscription[];
   }>): Promise<void> {
     const passwords = this.store.get('passwords');
     const index = passwords.findIndex(p => p.id === id);
-    
+
     if (index === -1) {
       throw new Error('密码记录不存在');
     }
-    
+
     if (data.softwareName !== undefined) {
       passwords[index].software_name = data.softwareName;
     }
     if (data.username !== undefined) {
       passwords[index].username = data.username;
     }
+    if (data.loginType !== undefined) {
+      passwords[index].login_type = data.loginType;
+    }
     if (data.encryptedPassword !== undefined) {
       passwords[index].encrypted_password = data.encryptedPassword;
+    }
+    if (data.phoneNumber !== undefined) {
+      passwords[index].phone_number = data.phoneNumber;
     }
     if (data.url !== undefined) {
       passwords[index].url = data.url;
@@ -292,7 +427,10 @@ export class DatabaseService {
     if (data.category !== undefined && data.category !== '') {
       passwords[index].category = data.category;
     }
-    
+    if (data.subscriptions !== undefined) {
+      passwords[index].subscriptions = data.subscriptions;
+    }
+
     passwords[index].updated_at = new Date().toISOString();
     this.store.set('passwords', passwords);
   }
@@ -441,5 +579,158 @@ export class DatabaseService {
       config.displayCategories.categories = categories;
     }
     this.store.set('config', config);
+  }
+
+  // ==================== 会员订阅管理 ====================
+
+  // 添加订阅到密码记录
+  async addSubscription(passwordId: number, subscription: {
+    serviceName: string;
+    category: 'video' | 'music' | 'game' | 'software' | 'cloud' | 'shopping' | 'other';
+    level: 'basic' | 'premium' | 'ultimate';
+    billingMode: BillingMode;
+    startDate?: string;
+    endDate?: string;
+    totalAmount?: number;
+    usedAmount?: number;
+    unit?: UnitType;
+    cost?: number;
+    autoRenew: boolean;
+    note?: string;
+  }): Promise<Subscription> {
+    const passwords = this.store.get('passwords');
+    const password = passwords.find(p => p.id === passwordId);
+    if (!password) {
+      throw new Error('密码记录不存在');
+    }
+
+    const newSubscription: Subscription = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      serviceName: subscription.serviceName,
+      category: subscription.category,
+      level: subscription.level,
+      billingMode: subscription.billingMode,
+      startDate: subscription.startDate,
+      endDate: subscription.endDate,
+      totalAmount: subscription.totalAmount,
+      usedAmount: subscription.usedAmount,
+      unit: subscription.unit,
+      cost: subscription.cost,
+      autoRenew: subscription.autoRenew,
+      note: subscription.note,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const subscriptions = password.subscriptions || [];
+    subscriptions.push(newSubscription);
+
+    await this.updatePassword(passwordId, { subscriptions });
+    return newSubscription;
+  }
+
+  // 更新订阅
+  async updateSubscription(passwordId: number, subscriptionId: string, data: Partial<Omit<Subscription, 'id' | 'created_at'>>): Promise<void> {
+    const password = await this.getPasswordById(passwordId);
+    if (!password) {
+      throw new Error('密码记录不存在');
+    }
+
+    const subscriptions = password.subscriptions || [];
+    const index = subscriptions.findIndex(s => s.id === subscriptionId);
+
+    if (index === -1) {
+      throw new Error('订阅记录不存在');
+    }
+
+    subscriptions[index] = {
+      ...subscriptions[index],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.updatePassword(passwordId, { subscriptions });
+  }
+
+  // 删除订阅
+  async deleteSubscription(passwordId: number, subscriptionId: string): Promise<void> {
+    const password = await this.getPasswordById(passwordId);
+    if (!password) {
+      throw new Error('密码记录不存在');
+    }
+
+    const subscriptions = password.subscriptions || [];
+    const filtered = subscriptions.filter(s => s.id !== subscriptionId);
+
+    await this.updatePassword(passwordId, { subscriptions: filtered });
+  }
+
+  // 获取即将到期的订阅
+  async getExpiringSubscriptions(days: number): Promise<Array<{ passwordId: number; passwordName: string; subscription: Subscription }>> {
+    const passwords = this.store.get('passwords');
+    const now = new Date();
+    const threshold = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+
+    const result: Array<{ passwordId: number; passwordName: string; subscription: Subscription }> = [];
+
+    for (const password of passwords) {
+      const subscriptions = password.subscriptions || [];
+      for (const subscription of subscriptions) {
+        // 只处理时间制订阅
+        if (subscription.billingMode !== 'time' || !subscription.endDate) {
+          continue;
+        }
+        const endDate = new Date(subscription.endDate);
+        if (endDate <= threshold && endDate >= now) {
+          result.push({
+            passwordId: password.id,
+            passwordName: password.software_name,
+            subscription,
+          });
+        }
+      }
+    }
+
+    // 按到期日期排序
+    result.sort((a, b) => new Date(a.subscription.endDate!).getTime() - new Date(b.subscription.endDate!).getTime());
+
+    return result;
+  }
+
+  // 获取通知配置
+  getNotificationConfig(): AppConfig['notificationConfig'] {
+    const config = this.store.get('config');
+    return config.notificationConfig || {
+      systemNotification: {
+        enabled: true,
+        remindDays: 7,
+      },
+      emailNotification: {
+        enabled: false,
+        smtpHost: '',
+        smtpPort: 587,
+        fromEmail: '',
+        authCode: '',
+        toEmail: '',
+        remindDays: 7,
+        remindTime: '09:00',
+      },
+    };
+  }
+
+  // 更新通知配置
+  updateNotificationConfig(notificationConfig: Partial<AppConfig['notificationConfig']>): void {
+    const config = this.store.get('config');
+    config.notificationConfig = { ...config.notificationConfig, ...notificationConfig };
+    this.store.set('config', config);
+  }
+
+  // 更新上次检查时间
+  updateLastCheckTime(): void {
+    const config = this.store.get('config');
+    if (config.notificationConfig) {
+      config.notificationConfig.lastCheckTime = new Date().toISOString();
+      this.store.set('config', config);
+    }
   }
 }
