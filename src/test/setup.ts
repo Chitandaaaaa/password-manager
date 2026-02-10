@@ -3,6 +3,9 @@ import { expect, beforeEach, afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import * as matchers from '@testing-library/jest-dom/matchers';
 
+// Import mock store setup
+import './mock-store';
+
 // Extend Vitest's expect method with methods from react-testing-library
 expect.extend(matchers);
 
@@ -33,6 +36,10 @@ beforeEach(() => {
     smartImport: vi.fn(),
     exportPasswords: vi.fn(),
     onAppLock: vi.fn(),
+    selectFile: vi.fn(),
+    parsePasswordsWithAI: vi.fn(),
+    generatePassword: vi.fn(),
+    changeMasterPassword: vi.fn(),
   };
 });
 

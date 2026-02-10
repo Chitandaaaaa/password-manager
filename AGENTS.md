@@ -132,9 +132,65 @@ export default function ComponentName({ prop1, prop2 }: Props) {
 
 ### Before Committing
 1. Run `npm run typecheck` - must pass
-2. Run affected tests - must pass
+2. **Run affected tests** - must pass (详见下方测试规则)
 3. Check no `console.log` left in production code (except debug logs)
 4. Use `git add -A` then `git commit -m "type: description"`
+
+### Testing Rules (测试执行规则)
+
+**每次修改代码后的强制流程：**
+
+```bash
+# 1. 运行类型检查
+npm run typecheck
+
+# 2. 运行相关单元测试（必须全部通过）
+npm test
+
+# 3. 如果有测试失败，必须修复后才能提交
+# 禁止使用 git commit --no-verify 跳过检查
+```
+
+**测试执行优先级：**
+
+| 修改范围 | 必须运行的测试 | 命令 |
+|---------|--------------|------|
+| 加密相关 | CryptoService 测试 | `npx vitest run electron/services/crypto.test.ts` |
+| 密码服务 | PasswordService 测试 | `npx vitest run electron/services/password.test.ts` |
+| 数据库 | DatabaseService 测试 | `npx vitest run electron/services/database.test.ts` |
+| UI组件 | 对应组件测试 | `npx vitest run src/components/Xxx.test.tsx` |
+| 全局改动 | 全部测试 | `npm test` |
+
+**测试失败处理流程：**
+
+1. **查看失败原因** - 运行 `npm test` 查看具体失败用例
+2. **定位问题** - 根据错误堆栈找到问题代码
+3. **修复代码** - 修改源代码或测试代码（如测试已过时）
+4. **重新运行** - 再次运行测试直到全部通过
+5. **禁止提交** - 测试未通过前禁止使用 `git commit`
+
+**测试覆盖要求：**
+
+- 新增功能 → 必须编写对应的单元测试
+- 修改功能 → 必须确保相关测试通过
+- 删除功能 → 必须删除对应的单元测试
+- Bug修复 → 必须添加回归测试（防止再次出现）
+
+**测试快速检查清单：**
+
+```bash
+# 运行特定文件测试
+npx vitest run <测试文件路径>
+
+# 运行特定测试用例
+npx vitest run -t "测试用例描述"
+
+# 监视模式（开发时使用）
+npm run test:watch
+
+# 带覆盖率报告
+npm run test:coverage
+```
 
 ## Common Issues
 
