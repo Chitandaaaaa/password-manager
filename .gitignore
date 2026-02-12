@@ -38,6 +38,9 @@ dist-electron
 release
 release-builds
 out
+dist-release/
+dist/
+*.exe
 
 # Electron Builder
 app/dist
