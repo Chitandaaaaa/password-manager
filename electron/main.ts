@@ -351,6 +351,7 @@ ipcMain.handle('password:update', async (event, id: number, data: any) => {
       loginType: data.loginType,
       password: data.password,
       phoneNumber: data.phoneNumber,
+      email: data.email,
       url: data.url,
       notes: data.notes,
       category: data.category,

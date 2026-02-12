@@ -1,5 +1,5 @@
 import { useState, memo, useCallback } from 'react';
-import { Copy, Eye, EyeOff, ExternalLink, Trash2, Edit2, Check, CreditCard, Plus, Smartphone } from 'lucide-react';
+import { Copy, Eye, EyeOff, ExternalLink, Trash2, Edit2, Check, CreditCard, Plus, Smartphone, Mail } from 'lucide-react';
 import { Password, Subscription, CATEGORY_LABELS, LEVEL_LABELS, BILLING_MODE_LABELS } from '../types';
 import { formatDate, cn } from '../lib/utils';
 import SubscriptionModal from './SubscriptionModal';
@@ -54,8 +54,34 @@ function PasswordCardInner({ password, onDelete, onEdit, onRefresh }: PasswordCa
   };
 
   const handleCopy = async () => {
+    // 短信验证码：复制手机号
+    if (password.loginType === 'sms_code' && password.phoneNumber) {
+      try {
+        const result = await window.electronAPI.copyPassword(password.phoneNumber);
+        if (result.success) {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }
+      } catch (error) {
+        console.error('复制失败:', error);
+      }
+      return;
+    }
+    // 邮箱登录：复制邮箱
+    if (password.loginType === 'email' && password.email) {
+      try {
+        const result = await window.electronAPI.copyPassword(password.email);
+        if (result.success) {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }
+      } catch (error) {
+        console.error('复制失败:', error);
+      }
+      return;
+    }
+    // 密码登录：复制密码
     let passwordToCopy = decryptedPassword;
-    
     if (!passwordToCopy && !showPassword) {
       setIsLoading(true);
       try {
@@ -72,7 +98,6 @@ function PasswordCardInner({ password, onDelete, onEdit, onRefresh }: PasswordCa
         setIsLoading(false);
       }
     }
-    
     if (passwordToCopy) {
       try {
         const result = await window.electronAPI.copyPassword(passwordToCopy);
@@ -102,6 +127,11 @@ function PasswordCardInner({ password, onDelete, onEdit, onRefresh }: PasswordCa
   };
 
   const handleEdit = async () => {
+    // 邮箱登录和短信验证码无需解密，直接打开编辑
+    if (password.loginType === 'email' || password.loginType === 'sms_code') {
+      onEdit(password, '');
+      return;
+    }
     if (!showPassword || !decryptedPassword) {
       setIsLoading(true);
       try {
@@ -189,7 +219,7 @@ function PasswordCardInner({ password, onDelete, onEdit, onRefresh }: PasswordCa
                 </button>
               </div>
             </div>
-          ) : (
+          ) : password.loginType === 'sms_code' ? (
             <div className="flex items-center gap-2 mb-3">
               <Smartphone className="w-4 h-4 text-blue-500" />
               <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
@@ -208,6 +238,31 @@ function PasswordCardInner({ password, onDelete, onEdit, onRefresh }: PasswordCa
                 }}
                 className="btn-icon text-blue-600 hover:text-blue-700"
                 title="复制手机号"
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 mb-3">
+              <Mail className="w-4 h-4 text-emerald-500" />
+              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                邮箱登录
+              </span>
+              {password.email && (
+                <span className="text-sm text-slate-700 font-mono">
+                  {password.email.includes('@')
+                    ? password.email.split('@').map((part, i) => i === 0 ? part.slice(0, 3) + '***' : part).join('@')
+                    : '***'}
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  if (password.email) {
+                    window.electronAPI.copyPassword(password.email);
+                  }
+                }}
+                className="btn-icon text-emerald-600 hover:text-emerald-700"
+                title="复制邮箱"
               >
                 <Copy className="w-3.5 h-3.5" />
               </button>
@@ -365,7 +420,7 @@ function PasswordCardInner({ password, onDelete, onEdit, onRefresh }: PasswordCa
               'btn-icon',
               copied && 'bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700'
             )}
-            title={copied ? '已复制' : '复制密码'}
+            title={copied ? '已复制' : (password.loginType === 'email' ? '复制邮箱' : password.loginType === 'sms_code' ? '复制手机号' : '复制密码')}
           >
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </button>

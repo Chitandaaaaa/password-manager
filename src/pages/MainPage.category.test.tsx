@@ -31,6 +31,7 @@ describe('MainPage Category Integration', () => {
     // Setup mock electronAPI
     window.electronAPI.listPasswords = vi.fn();
     window.electronAPI.listCategories = vi.fn();
+    window.electronAPI.getDisplayCategories = vi.fn().mockResolvedValue({ success: false });
     window.electronAPI.getConfig = vi.fn();
     window.electronAPI.logout = vi.fn();
     window.electronAPI.onAppLock = vi.fn();
@@ -122,7 +123,7 @@ describe('MainPage Category Integration', () => {
       expect(formattedPasswords[1].softwareName).toBe('公司邮箱');
       expect(formattedPasswords[2].category).toBe('银行');
       expect(formattedPasswords[2].softwareName).toBe('支付宝');
-      expect(formattedPasswords[3].category).toBeUndefined();
+      expect(formattedPasswords[3].category).toBe('未分类');
       expect(formattedPasswords[3].softwareName).toBe('Test App');
     });
 

@@ -200,11 +200,14 @@ export default function SmartImportModal({ isOpen, onClose, onSuccess }: SmartIm
       }
       
       for (const entry of entriesToImport) {
+        const loginType = entry.loginType || 'password';
         const result = await window.electronAPI.addPassword({
           softwareName: entry.softwareName,
           username: entry.username,
-          loginType: 'password',
-          password: entry.password,
+          loginType,
+          password: loginType === 'password' ? entry.password : undefined,
+          phoneNumber: loginType === 'sms_code' ? entry.phoneNumber : undefined,
+          email: loginType === 'email' ? entry.email : undefined,
           url: entry.url,
           category: entry.category || '未分类',
           notes: entry.notes,
@@ -429,6 +432,13 @@ export default function SmartImportModal({ isOpen, onClose, onSuccess }: SmartIm
                         '帐户': 'username',
                         '密码': 'password',
                         '口令': 'password',
+                        '邮箱': 'email',
+                        '邮件': 'email',
+                        '手机号': 'phoneNumber',
+                        '手机': 'phoneNumber',
+                        '电话': 'phoneNumber',
+                        '登录方式': 'loginType',
+                        '登陆方式': 'loginType',
                         '网址': 'url',
                         '网站地址': 'url',
                         '链接': 'url',
@@ -453,9 +463,14 @@ export default function SmartImportModal({ isOpen, onClose, onSuccess }: SmartIm
                         return normalized;
                       });
                       
-                      const validEntries = normalizedEntries.filter((e: any) => e.softwareName && e.password);
+                      const isValidEntry = (e: any) => {
+                        if (!e.softwareName) return false;
+                        const lt = e.loginType || 'password';
+                        return (lt === 'password' && e.password) || (lt === 'email' && e.email) || (lt === 'sms_code' && e.phoneNumber);
+                      };
+                      const validEntries = normalizedEntries.filter(isValidEntry);
                       if (validEntries.length === 0) {
-                        setError('未找到有效的密码数据，请确保包含 softwareName 和 password 字段（或对应的中文：软件名称、密码）');
+                        setError('未找到有效的密码数据。密码登录需 softwareName+password；邮箱登录需 softwareName+email+loginType:"email"；短信登录需 softwareName+phoneNumber+loginType:"sms_code"');
                         return;
                       }
                       setParsedEntries(validEntries);

@@ -1,7 +1,7 @@
 import { DatabaseService } from './database';
 import { CryptoService, EncryptedData } from './crypto';
 
-export type LoginType = 'password' | 'sms_code';
+export type LoginType = 'password' | 'sms_code' | 'email';
 
 export interface PasswordData {
   softwareName: string;
@@ -9,6 +9,7 @@ export interface PasswordData {
   loginType: LoginType;
   password?: string;
   phoneNumber?: string;
+  email?: string;
   url?: string;
   notes?: string;
   category: string; // 必须与数据库一致，不为空
@@ -21,6 +22,7 @@ export interface PasswordRecord {
   login_type: LoginType;
   encrypted_password?: string;
   phone_number?: string;
+  email?: string;
   url?: string;
   notes?: string;
   category: string; // 必须与数据库一致，不为空
@@ -55,6 +57,7 @@ export class PasswordService {
       loginType: data.loginType,
       encryptedPassword,
       phoneNumber: data.phoneNumber,
+      email: data.email,
       url: data.url,
       notes: data.notes,
       category: data.category || '未分类',
@@ -104,8 +107,15 @@ export class PasswordService {
     if (data.phoneNumber !== undefined) {
       updateData.phoneNumber = data.phoneNumber;
     }
+    if (data.email !== undefined) {
+      updateData.email = data.email;
+    }
     if (data.url !== undefined) {
       updateData.url = data.url;
+    }
+    // 切换为邮箱登录或短信验证码时清空密码
+    if (data.loginType === 'email' || data.loginType === 'sms_code') {
+      updateData.encryptedPassword = '';
     }
     if (data.notes !== undefined) {
       console.log('更新 notes:', data.notes);
@@ -137,6 +147,7 @@ export class PasswordService {
     loginType: LoginType;
     password?: string;
     phoneNumber?: string;
+    email?: string;
     url?: string;
     notes?: string;
     category: string;
@@ -163,6 +174,7 @@ export class PasswordService {
           loginType: record.login_type,
           password: decryptedPassword,
           phoneNumber: record.phone_number,
+          email: record.email,
           url: record.url,
           notes: record.notes,
           category: record.category,

@@ -32,7 +32,7 @@ interface User {
   updated_at: string;
 }
 
-type LoginType = 'password' | 'sms_code';
+type LoginType = 'password' | 'sms_code' | 'email';
 
 interface PasswordRecord {
   id: number;
@@ -41,6 +41,7 @@ interface PasswordRecord {
   login_type: LoginType;
   encrypted_password?: string;
   phone_number?: string;
+  email?: string;
   url?: string;
   notes?: string;
   category: string;
@@ -320,6 +321,7 @@ export class DatabaseService {
     loginType: LoginType;
     encryptedPassword?: string;
     phoneNumber?: string;
+    email?: string;
     url?: string;
     notes?: string;
     category: string;
@@ -332,6 +334,7 @@ export class DatabaseService {
       login_type: data.loginType,
       encrypted_password: data.encryptedPassword,
       phone_number: data.phoneNumber,
+      email: data.email,
       url: data.url,
       notes: data.notes,
       category: data.category || '未分类',
@@ -391,6 +394,7 @@ export class DatabaseService {
     loginType: LoginType;
     encryptedPassword: string;
     phoneNumber: string;
+    email: string;
     url: string;
     notes: string;
     category: string;
@@ -417,6 +421,9 @@ export class DatabaseService {
     }
     if (data.phoneNumber !== undefined) {
       passwords[index].phone_number = data.phoneNumber;
+    }
+    if (data.email !== undefined) {
+      passwords[index].email = data.email;
     }
     if (data.url !== undefined) {
       passwords[index].url = data.url;

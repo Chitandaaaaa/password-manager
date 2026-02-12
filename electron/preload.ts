@@ -42,7 +42,7 @@ export interface NotificationConfig {
 }
 
 // 登录类型
-export type LoginType = 'password' | 'sms_code';
+export type LoginType = 'password' | 'sms_code' | 'email';
 
 // 密码数据
 export interface PasswordData {
@@ -51,6 +51,7 @@ export interface PasswordData {
   loginType: LoginType;
   password?: string;
   phoneNumber?: string;
+  email?: string;
   url?: string;
   notes?: string;
   category: string;
@@ -62,6 +63,8 @@ export interface PasswordRecord {
   software_name: string;
   username?: string;
   login_type: LoginType;
+  phone_number?: string;
+  email?: string;
   url?: string;
   notes?: string;
   category: string;

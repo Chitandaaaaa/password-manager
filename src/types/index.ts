@@ -67,11 +67,12 @@ export interface NotificationConfig {
 
 // ==================== 登录类型 ====================
 
-export type LoginType = 'password' | 'sms_code';
+export type LoginType = 'password' | 'sms_code' | 'email';
 
 export const LOGIN_TYPE_LABELS: Record<LoginType, string> = {
   password: '密码登录',
   sms_code: '短信验证码',
+  email: '邮箱登录',
 };
 
 // ==================== 密码相关 ====================
@@ -83,6 +84,7 @@ export interface Password {
   loginType: LoginType;           // 登录方式
   password?: string;              // 密码（密码登录时必填）
   phoneNumber?: string;           // 手机号（短信验证码登录时必填）
+  email?: string;                 // 邮箱（邮箱登录时必填）
   url?: string;
   notes?: string;
   category: string;
@@ -98,6 +100,7 @@ export interface PasswordFormData {
   loginType: LoginType;
   password: string;
   phoneNumber: string;
+  email: string;
   url: string;
   notes: string;
   category: string;
@@ -111,6 +114,7 @@ export interface PasswordRecordAPI {
   login_type: LoginType;
   encrypted_password?: string;
   phone_number?: string;
+  email?: string;
   url?: string;
   notes?: string;
   category: string;

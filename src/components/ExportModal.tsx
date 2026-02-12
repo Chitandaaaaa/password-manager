@@ -43,11 +43,14 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
           mimeType = 'application/json';
         } else {
           // CSV 格式
-          const headers = ['软件名称', '用户名', '密码', '网址', '分类', '备注', '创建时间', '更新时间'];
+          const headers = ['软件名称', '用户名', '登录方式', '密码', '手机号', '邮箱', '网址', '分类', '备注', '创建时间', '更新时间'];
           const rows = result.passwords.map((p: any) => [
             p.softwareName,
             p.username || '',
-            includePasswords ? p.password : '***',
+            p.loginType || 'password',
+            includePasswords ? (p.password || '') : '***',
+            p.phoneNumber || '',
+            p.email || '',
             p.url || '',
             p.category,
             p.notes || '',

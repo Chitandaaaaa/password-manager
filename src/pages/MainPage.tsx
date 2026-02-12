@@ -116,6 +116,8 @@ export default function MainPage() {
             softwareName: p.software_name,
             username: p.username,
             loginType: p.login_type || 'password', // 默认为密码登录
+            phoneNumber: p.phone_number,
+            email: p.email,
             url: p.url,
             notes: p.notes,
             category: category, // 保证不为空

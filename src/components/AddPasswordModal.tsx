@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Lock, Globe, FileText, RefreshCw, Eye, EyeOff, Smartphone } from 'lucide-react';
+import { X, Lock, Globe, FileText, RefreshCw, Eye, EyeOff, Smartphone, Mail } from 'lucide-react';
 import { cn, getPasswordStrengthColor, getPasswordStrengthText } from '../lib/utils';
 import { LoginType, LOGIN_TYPE_LABELS } from '../types';
 
@@ -16,6 +16,7 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
     loginType: 'password' as LoginType,
     password: '',
     phoneNumber: '',
+    email: '',
     url: '',
     notes: '',
     category: '未分类',
@@ -93,6 +94,18 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
       }
     }
 
+    if (formData.loginType === 'email') {
+      if (!formData.email.trim()) {
+        setError('请输入邮箱');
+        return false;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        setError('请输入正确的邮箱格式');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -113,6 +126,7 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
         loginType: formData.loginType,
         password: formData.loginType === 'password' ? formData.password : undefined,
         phoneNumber: formData.loginType === 'sms_code' ? formData.phoneNumber.trim() : undefined,
+        email: formData.loginType === 'email' ? formData.email.trim() : undefined,
         url: formData.url.trim(),
         notes: formData.notes.trim(),
         category: formData.category,
@@ -128,6 +142,7 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
           loginType: 'password',
           password: '',
           phoneNumber: '',
+          email: '',
           url: '',
           notes: '',
           category: '未分类',
@@ -187,12 +202,12 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
             <label className="block text-sm font-medium text-gray-700 mb-2">
               登录方式
             </label>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, loginType: 'password' })}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-all',
+                  'flex-1 min-w-[100px] flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-all',
                   formData.loginType === 'password'
                     ? 'border-primary-500 bg-primary-50 text-primary-700'
                     : 'border-gray-200 hover:border-gray-300'
@@ -205,7 +220,7 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
                 type="button"
                 onClick={() => setFormData({ ...formData, loginType: 'sms_code' })}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-all',
+                  'flex-1 min-w-[100px] flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-all',
                   formData.loginType === 'sms_code'
                     ? 'border-blue-500 bg-blue-50 text-blue-700'
                     : 'border-gray-200 hover:border-gray-300'
@@ -213,6 +228,19 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
               >
                 <Smartphone className="w-4 h-4" />
                 <span className="text-sm font-medium">{LOGIN_TYPE_LABELS.sms_code}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, loginType: 'email' })}
+                className={cn(
+                  'flex-1 min-w-[100px] flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 transition-all',
+                  formData.loginType === 'email'
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                )}
+              >
+                <Mail className="w-4 h-4" />
+                <span className="text-sm font-medium">{LOGIN_TYPE_LABELS.email}</span>
               </button>
             </div>
           </div>
@@ -309,6 +337,26 @@ export default function AddPasswordModal({ isOpen, onClose, onSuccess }: AddPass
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">用于接收短信验证码登录</p>
+            </div>
+          )}
+
+          {/* 邮箱字段 - 仅在邮箱登录时显示 */}
+          {formData.loginType === 'email' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                邮箱 <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="input-field pl-10"
+                  placeholder="user@example.com"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">用于邮箱登录</p>
             </div>
           )}
 

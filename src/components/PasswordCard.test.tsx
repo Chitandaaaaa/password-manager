@@ -357,5 +357,44 @@ describe('PasswordCard', () => {
       expect(screen.getByText('test')).toBeInTheDocument();
       expect(screen.queryByText('未分类')).not.toBeInTheDocument();
     });
+
+    it('should display email login type with masked email', () => {
+      const emailPassword: Password = {
+        ...mockPassword,
+        loginType: 'email',
+        email: 'user@example.com',
+        username: undefined,
+      };
+      render(
+        <PasswordCard 
+          password={emailPassword} 
+          onDelete={mockOnDelete} 
+          onEdit={mockOnEdit} 
+        />
+      );
+
+      expect(screen.getByText('邮箱登录')).toBeInTheDocument();
+      expect(screen.getByText('use***@example.com')).toBeInTheDocument();
+    });
+
+    it('should open edit modal without decrypt for email login type', async () => {
+      const emailPassword: Password = {
+        ...mockPassword,
+        loginType: 'email',
+        email: 'user@example.com',
+      };
+      render(
+        <PasswordCard 
+          password={emailPassword} 
+          onDelete={mockOnDelete} 
+          onEdit={mockOnEdit} 
+        />
+      );
+
+      const editButton = screen.getByTitle('编辑');
+      await userEvent.click(editButton);
+
+      expect(mockOnEdit).toHaveBeenCalledWith(emailPassword, '');
+    });
   });
 });
