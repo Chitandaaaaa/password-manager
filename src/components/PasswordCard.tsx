@@ -231,15 +231,11 @@ function PasswordCardInner({ password, onDelete, onEdit, onRefresh }: PasswordCa
                 </span>
               )}
               <button
-                onClick={() => {
-                  if (password.phoneNumber) {
-                    window.electronAPI.copyPassword(password.phoneNumber);
-                  }
-                }}
+                onClick={handleCopy}
                 className="btn-icon text-blue-600 hover:text-blue-700"
-                title="复制手机号"
+                title={copied ? '已复制' : '复制手机号'}
               >
-                <Copy className="w-3.5 h-3.5" />
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
           ) : (
@@ -256,15 +252,11 @@ function PasswordCardInner({ password, onDelete, onEdit, onRefresh }: PasswordCa
                 </span>
               )}
               <button
-                onClick={() => {
-                  if (password.email) {
-                    window.electronAPI.copyPassword(password.email);
-                  }
-                }}
+                onClick={handleCopy}
                 className="btn-icon text-emerald-600 hover:text-emerald-700"
-                title="复制邮箱"
+                title={copied ? '已复制' : '复制邮箱'}
               >
-                <Copy className="w-3.5 h-3.5" />
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
           )}
